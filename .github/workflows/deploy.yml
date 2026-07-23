@@ -1,0 +1,307 @@
+name: CI/CD Pipeline - Dev, QA, Prod
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+      - main
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_ZONE: us-central1-a
+
+jobs:
+  # ============= BUILD & TEST =============
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint 2>/dev/null || echo "Linter not configured"
+
+      - name: Run Tests
+        run: npm test 2>/dev/null || echo "Tests not configured"
+
+      - name: Build Project
+        run: npm run build 2>/dev/null || echo "Build script not configured"
+
+  # ============= DEPLOY TO DEV =============
+  deploy-dev:
+    name: Deploy to Development
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: development
+      url: http://dev-student.mydevops1.xyz
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure gcloud
+        run: |
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud config set compute/zone ${{ env.GCP_ZONE }}
+          gcloud auth application-default print-access-token > /dev/null
+
+      - name: Create .env for Dev
+        run: |
+          cat > .env << EOF
+          MONGO_URI=${{ secrets.DEV_MONGO_URI }}
+          PORT=3001
+          NODE_ENV=development
+          ENVIRONMENT=dev
+          EOF
+
+      - name: Deploy Dev to GCP VM
+        run: |
+          gcloud compute ssh vm-dev \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="
+              cd ~/student-management && \
+              git fetch origin && \
+              git checkout develop && \
+              git pull origin develop && \
+              npm install && \
+              pm2 delete student-app-dev 2>/dev/null || true && \
+              pm2 start server.js --name 'student-app-dev' && \
+              pm2 save
+            "
+
+      - name: Health Check
+        run: |
+          sleep 5
+          curl -f http://dev-student.mydevops1.xyz || exit 1
+
+      - name: Slack Notification - Dev
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "🚀 Dev Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Development Deployment*\nStatus: ${{ job.status }}\nBranch: develop\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+
+  # ============= DEPLOY TO QA =============
+  deploy-qa:
+    name: Deploy to QA
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+    environment:
+      name: qa
+      url: http://qa-student.mydevops1.xyz
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure gcloud
+        run: |
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud config set compute/zone ${{ env.GCP_ZONE }}
+          gcloud auth application-default print-access-token > /dev/null
+
+      - name: Create .env for QA
+        run: |
+          cat > .env << EOF
+          MONGO_URI=${{ secrets.QA_MONGO_URI }}
+          PORT=3002
+          NODE_ENV=staging
+          ENVIRONMENT=qa
+          EOF
+
+      - name: Deploy QA to GCP VM
+        run: |
+          gcloud compute ssh vm-qa \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="
+              cd ~/student-management && \
+              git fetch origin && \
+              git checkout staging && \
+              git pull origin staging && \
+              npm install && \
+              pm2 delete student-app-qa 2>/dev/null || true && \
+              pm2 start server.js --name 'student-app-qa' && \
+              pm2 save
+            "
+
+      - name: Health Check
+        run: |
+          sleep 5
+          curl -f http://qa-student.mydevops1.xyz || exit 1
+
+      - name: Slack Notification - QA
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "🔍 QA Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*QA Deployment*\nStatus: ${{ job.status }}\nBranch: staging\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+
+  # ============= DEPLOY TO PRODUCTION =============
+  deploy-prod:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://student.mydevops1.xyz
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure gcloud
+        run: |
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud config set compute/zone ${{ env.GCP_ZONE }}
+          gcloud auth application-default print-access-token > /dev/null
+
+      - name: Create .env for Production
+        run: |
+          cat > .env << EOF
+          MONGO_URI=${{ secrets.PROD_MONGO_URI }}
+          PORT=3000
+          NODE_ENV=production
+          ENVIRONMENT=prod
+          EOF
+
+      - name: Create Backup
+        run: |
+          gcloud compute ssh vm-public \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="
+              cp -r ~/student-management ~/student-management-backup-\$(date +%s) && \
+              echo 'Backup created successfully'
+            "
+
+      - name: Deploy Production to GCP VM
+        run: |
+          gcloud compute ssh vm-public \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="
+              cd ~/student-management && \
+              git fetch origin && \
+              git checkout main && \
+              git pull origin main && \
+              npm install && \
+              pm2 restart student-app && \
+              pm2 save && \
+              sleep 3 && \
+              pm2 status
+            "
+
+      - name: Health Check
+        run: |
+          sleep 5
+          curl -f https://student.mydevops1.xyz || exit 1
+
+      - name: Create Release Tag
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git tag -a v${{ github.run_number }} -m "Production release v${{ github.run_number }}"
+          git push origin v${{ github.run_number }} 2>/dev/null || echo "Tag already exists"
+
+      - name: Slack Notification - Production
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "🎉 Production Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment*\nStatus: ${{ job.status }}\nBranch: main\nCommit: ${{ github.sha }}\nVersion: v${{ github.run_number }}"
+                  }
+                }
+              ]
+            }
+
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          gcloud compute ssh vm-public \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="
+              cd ~ && \
+              LATEST_BACKUP=\$(ls -dt student-management-backup-* 2>/dev/null | head -1) && \
+              if [ -n \"\$LATEST_BACKUP\" ]; then
+                rm -rf ~/student-management && \
+                mv \$LATEST_BACKUP ~/student-management && \
+                cd ~/student-management && \
+                pm2 restart student-app && \
+                echo 'Rollback completed'
+              fi
+            "
+

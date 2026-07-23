@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #87CEEB; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 { color: #333; margin-bottom: 20px; }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover { background: #45a049; }
+
+        .students-section { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+        }
+
+        .students-section h2 { color: #333; margin-bottom: 20px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f9f9f9; font-weight: bold; }
+        tr:hover { background: #f5f5f5; }
+
+        .action-btn {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .edit-btn { background: #2196F3; color: white; }
+        .delete-btn { background: #f44336; color: white; }
+        .edit-btn:hover { background: #0b7dda; }
+        .delete-btn:hover { background: #da190b; }
+
+        .loading { text-align: center; color: #666; padding: 20px; }
+        .empty { text-align: center; color: #999; padding: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Student Management System</h1>
+
+        <div class="form-section">
+            <h2>Add New Student</h2>
+            <div class="form-group">
+                <input type="text" id="name" placeholder="Full Name">
+                <input type="email" id="email" placeholder="Email ID">
+                <input type="text" id="city" placeholder="City">
+                <select id="degree">
+                    <option value="">Select Degree</option>
+                    <option value="B.Tech">B.Tech</option>
+                    <option value="M.Tech">M.Tech</option>
+                    <option value="BCA">BCA</option>
+                    <option value="MCA">MCA</option>
+                    <option value="B.Sc">B.Sc</option>
+                    <option value="M.Sc">M.Sc</option>
+                </select>
+                <button onclick="addStudent()">Add Student</button>
+            </div>
+        </div>
+
+        <div class="students-section">
+            <h2>Student List</h2>
+            <div id="studentsTable" class="loading">Loading students...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // Fetch और Display Students
+        async function loadStudents() {
+            try {
+                const response = await fetch(`${API_BASE}/students`);
+                const students = await response.json();
+
+                if (students.length === 0) {
+                    document.getElementById('studentsTable').innerHTML = '<p class="empty">No students found. Add one to get started!</p>';
+                    return;
+                }
+
+                let html = `<table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>City</th>
+                            <th>Degree</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                students.forEach((student, index) => {
+                    html += `<tr>
+                        <td>${index + 1}</td>
+                        <td>${student.name}</td>
+                        <td>${student.email}</td>
+                        <td>${student.city}</td>
+                        <td>${student.degree}</td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editStudent('${student._id}', '${student.name}', '${student.email}', '${student.city}', '${student.degree}')">Edit</button>
+                            <button class="action-btn delete-btn" onclick="deleteStudent('${student._id}')">Delete</button>
+                        </td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>`;
+                document.getElementById('studentsTable').innerHTML = html;
+            } catch (err) {
+                document.getElementById('studentsTable').innerHTML = `<p class="loading">Error loading students: ${err.message}</p>`;
+            }
+        }
+
+        // Add Student
+        async function addStudent() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const city = document.getElementById('city').value;
+            const degree = document.getElementById('degree').value;
+
+            if (!name || !email || !city || !degree) {
+                alert('Please fill all fields!');
+                return;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/students`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, city, degree })
+                });
+
+                if (response.ok) {
+                    document.getElementById('name').value = '';
+                    document.getElementById('email').value = '';
+                    document.getElementById('city').value = '';
+                    document.getElementById('degree').value = '';
+                    loadStudents();
+                    alert('Student added successfully!');
+                } else {
+                    alert('Error adding student');
+                }
+            } catch (err) {
+                alert('Error adding student: ' + err.message);
+            }
+        }
+
+        // Edit Student
+        async function editStudent(id, oldName, oldEmail, oldCity, oldDegree) {
+            const name = prompt('Enter new name:', oldName);
+            if (name === null) return;
+            
+            const email = prompt('Enter new email:', oldEmail);
+            if (email === null) return;
+            
+            const city = prompt('Enter new city:', oldCity);
+            if (city === null) return;
+            
+            const degree = prompt('Enter new degree:', oldDegree);
+            if (degree === null) return;
+
+            if (name && email && city && degree) {
+                try {
+                    await fetch(`${API_BASE}/students/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, city, degree })
+                    });
+                    loadStudents();
+                    alert('Student updated!');
+                } catch (err) {
+                    alert('Error updating student');
+                }
+            }
+        }
+
+        // Delete Student
+        async function deleteStudent(id) {
+            if (confirm('Are you sure you want to delete this student?')) {
+                try {
+                    await fetch(`${API_BASE}/students/${id}`, { method: 'DELETE' });
+                    loadStudents();
+                    alert('Student deleted!');
+                } catch (err) {
+                    alert('Error deleting student');
+                }
+            }
+        }
+
+        // Load on page load
+        loadStudents();
+        setInterval(loadStudents, 5000);
+    </script>
+</body>
+</html>

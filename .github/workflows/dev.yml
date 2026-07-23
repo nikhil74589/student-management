@@ -1,0 +1,14 @@
+name: dev
+on:
+  push:
+    branches: [develop]
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusable-deploy.yml
+    secrets: inherit
+    with:
+      vm: vm-dev
+      branch: develop
+      port: "3001"
+      environment: development
+

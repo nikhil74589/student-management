@@ -63,12 +63,12 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
 
       - name: Configure gcloud
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
-          gcloud auth application-default print-access-token > /dev/null
 
       - name: Create .env for Dev
         run: |
@@ -79,8 +79,12 @@ jobs:
           ENVIRONMENT=dev
           EOF
 
-      - name: Deploy Dev to GCP VM
+      - name: Copy .env to VM and Deploy Dev
         run: |
+          gcloud compute scp .env vm-dev:~/ \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet
+          
           gcloud compute ssh vm-dev \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
@@ -90,8 +94,9 @@ jobs:
               git checkout develop && \
               git pull origin develop && \
               npm install && \
+              cp ~/.env ./ && \
               pm2 delete student-app-dev 2>/dev/null || true && \
-              pm2 start server.js --name 'student-app-dev' && \
+              pm2 start server.js --name 'student-app-dev' --env .env && \
               pm2 save
             "
 
@@ -99,25 +104,6 @@ jobs:
         run: |
           sleep 5
           curl -f http://dev-student.mydevops1.xyz || exit 1
-
-      - name: Slack Notification - Dev
-        if: always()
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "🚀 Dev Deployment: ${{ job.status }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Development Deployment*\nStatus: ${{ job.status }}\nBranch: develop\nCommit: ${{ github.sha }}"
-                  }
-                }
-              ]
-            }
 
   # ============= DEPLOY TO QA =============
   deploy-qa:
@@ -138,12 +124,12 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
 
       - name: Configure gcloud
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
-          gcloud auth application-default print-access-token > /dev/null
 
       - name: Create .env for QA
         run: |
@@ -154,8 +140,12 @@ jobs:
           ENVIRONMENT=qa
           EOF
 
-      - name: Deploy QA to GCP VM
+      - name: Copy .env to VM and Deploy QA
         run: |
+          gcloud compute scp .env vm-qa:~/ \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet
+          
           gcloud compute ssh vm-qa \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
@@ -165,8 +155,9 @@ jobs:
               git checkout staging && \
               git pull origin staging && \
               npm install && \
+              cp ~/.env ./ && \
               pm2 delete student-app-qa 2>/dev/null || true && \
-              pm2 start server.js --name 'student-app-qa' && \
+              pm2 start server.js --name 'student-app-qa' --env .env && \
               pm2 save
             "
 
@@ -174,25 +165,6 @@ jobs:
         run: |
           sleep 5
           curl -f http://qa-student.mydevops1.xyz || exit 1
-
-      - name: Slack Notification - QA
-        if: always()
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "🔍 QA Deployment: ${{ job.status }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*QA Deployment*\nStatus: ${{ job.status }}\nBranch: staging\nCommit: ${{ github.sha }}"
-                  }
-                }
-              ]
-            }
 
   # ============= DEPLOY TO PRODUCTION =============
   deploy-prod:
@@ -213,12 +185,12 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
 
       - name: Configure gcloud
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
-          gcloud auth application-default print-access-token > /dev/null
 
       - name: Create .env for Production
         run: |
@@ -239,8 +211,12 @@ jobs:
               echo 'Backup created successfully'
             "
 
-      - name: Deploy Production to GCP VM
+      - name: Copy .env to VM and Deploy Production
         run: |
+          gcloud compute scp .env vm-public:~/ \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet
+          
           gcloud compute ssh vm-public \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
@@ -250,6 +226,7 @@ jobs:
               git checkout main && \
               git pull origin main && \
               npm install && \
+              cp ~/.env ./ && \
               pm2 restart student-app && \
               pm2 save && \
               sleep 3 && \
@@ -265,27 +242,8 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git tag -a v${{ github.run_number }} -m "Production release v${{ github.run_number }}"
-          git push origin v${{ github.run_number }} 2>/dev/null || echo "Tag already exists"
-
-      - name: Slack Notification - Production
-        if: always()
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "🎉 Production Deployment: ${{ job.status }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Production Deployment*\nStatus: ${{ job.status }}\nBranch: main\nCommit: ${{ github.sha }}\nVersion: v${{ github.run_number }}"
-                  }
-                }
-              ]
-            }
+          git tag -a v${{ github.run_number }} -m "Production release v${{ github.run_number }}" || true
+          git push origin v${{ github.run_number }} 2>/dev/null || true
 
       - name: Rollback on Failure
         if: failure()

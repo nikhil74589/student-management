@@ -1,12 +1,19 @@
+# Dependencies
 node_modules/
+
+# Environment files
 .env
 env/*.env
 
+# Google Cloud Service Account Key
+key.json
+
+# PM2 Logs
 pm2.log
 logs/
 
+# NPM Logs
 npm-debug.log
 
-.git
-
+# macOS
 .DS_Store

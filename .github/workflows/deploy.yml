@@ -6,6 +6,7 @@ on:
       - develop
       - staging
       - main
+
   pull_request:
     branches:
       - develop
@@ -17,184 +18,212 @@ env:
   GCP_ZONE: us-central1-a
 
 jobs:
-  # ============= BUILD & TEST =============
+
+  # ================= BUILD =================
   build:
     name: Build & Test
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: 18
+          cache: npm
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Linter
-        run: npm run lint 2>/dev/null || echo "Linter not configured"
+      - name: Run Lint
+        run: |
+          npm run lint || echo "Lint not configured"
 
       - name: Run Tests
-        run: npm test 2>/dev/null || echo "Tests not configured"
+        run: |
+          npm test || echo "Tests not configured"
 
-      - name: Build Project
-        run: npm run build 2>/dev/null || echo "Build script not configured"
+      - name: Build Application
+        run: |
+          npm run build || echo "Build script not configured"
 
-  # ============= DEPLOY TO DEV =============
+  # ================= DEV =================
   deploy-dev:
-    name: Deploy to Development
+    name: Deploy Development
     needs: build
     runs-on: ubuntu-latest
+
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
     environment:
       name: development
       url: http://dev-student.mydevops1.xyz
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # FIXED AUTHENTICATION
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          export_default_credentials: true
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure gcloud
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
+          gcloud auth list
 
-      - name: Create .env for Dev
+      - name: Create .env
         run: |
-          cat > .env << EOF
+          cat > .env <<EOF
           MONGO_URI=${{ secrets.DEV_MONGO_URI }}
           PORT=3001
           NODE_ENV=development
           ENVIRONMENT=dev
           EOF
 
-      - name: Copy .env to VM and Deploy Dev
+      - name: Upload .env
         run: |
           gcloud compute scp .env vm-dev:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
-          
+
+      - name: Deploy Dev
+        run: |
           gcloud compute ssh vm-dev \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
-              cd ~/student-management && \
-              git fetch origin && \
-              git checkout develop && \
-              git pull origin develop && \
-              npm install && \
-              cp ~/.env ./ && \
-              pm2 delete student-app-dev 2>/dev/null || true && \
-              pm2 start server.js --name 'student-app-dev' --env .env && \
+              cd ~/student-management &&
+              git fetch origin &&
+              git checkout develop &&
+              git pull origin develop &&
+              npm ci &&
+              cp ~/.env ./.env &&
+              pm2 delete student-app-dev || true &&
+              pm2 start server.js --name student-app-dev --update-env &&
               pm2 save
             "
 
       - name: Health Check
         run: |
-          sleep 5
-          curl -f http://dev-student.mydevops1.xyz || exit 1
-
-  # ============= DEPLOY TO QA =============
+          sleep 10
+          curl --retry 5 --retry-delay 5 --fail http://dev-student.mydevops1.xyz
+            # ================= QA =================
   deploy-qa:
-    name: Deploy to QA
+    name: Deploy QA
     needs: build
     runs-on: ubuntu-latest
+
     if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+
     environment:
       name: qa
       url: http://qa-student.mydevops1.xyz
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # FIXED AUTHENTICATION
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          export_default_credentials: true
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure gcloud
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
+          gcloud auth list
 
-      - name: Create .env for QA
+      - name: Create .env
         run: |
-          cat > .env << EOF
+          cat > .env <<EOF
           MONGO_URI=${{ secrets.QA_MONGO_URI }}
           PORT=3002
           NODE_ENV=staging
           ENVIRONMENT=qa
           EOF
 
-      - name: Copy .env to VM and Deploy QA
+      - name: Upload .env
         run: |
           gcloud compute scp .env vm-qa:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
-          
+
+      - name: Deploy QA
+        run: |
           gcloud compute ssh vm-qa \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
-              cd ~/student-management && \
-              git fetch origin && \
-              git checkout staging && \
-              git pull origin staging && \
-              npm install && \
-              cp ~/.env ./ && \
-              pm2 delete student-app-qa 2>/dev/null || true && \
-              pm2 start server.js --name 'student-app-qa' --env .env && \
-              pm2 save
+              cd ~/student-management &&
+              git fetch origin &&
+              git checkout staging &&
+              git pull origin staging &&
+              npm ci &&
+              cp ~/.env ./.env &&
+              pm2 delete student-app-qa || true &&
+              pm2 start server.js --name student-app-qa --update-env &&
+              pm2 save &&
+              pm2 status
             "
 
       - name: Health Check
         run: |
-          sleep 5
-          curl -f http://qa-student.mydevops1.xyz || exit 1
-
-  # ============= DEPLOY TO PRODUCTION =============
+          sleep 10
+          curl --retry 5 \
+               --retry-delay 5 \
+               --fail \
+               http://qa-student.mydevops1.xyz
+                 # ================= PRODUCTION =================
   deploy-prod:
-    name: Deploy to Production
+    name: Deploy Production
     needs: build
     runs-on: ubuntu-latest
+
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
     environment:
       name: production
       url: https://student.mydevops1.xyz
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # FIXED AUTHENTICATION
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          export_default_credentials: true
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure gcloud
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
+          gcloud auth list
 
-      - name: Create .env for Production
+      - name: Create Production .env
         run: |
-          cat > .env << EOF
+          cat > .env <<EOF
           MONGO_URI=${{ secrets.PROD_MONGO_URI }}
           PORT=3000
           NODE_ENV=production
@@ -207,43 +236,51 @@ jobs:
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
-              cp -r ~/student-management ~/student-management-backup-\$(date +%s) && \
-              echo 'Backup created successfully'
+              BACKUP=~/student-management-backup-\$(date +%Y%m%d-%H%M%S) &&
+              cp -r ~/student-management \$BACKUP &&
+              echo Backup Created: \$BACKUP
             "
 
-      - name: Copy .env to VM and Deploy Production
+      - name: Upload .env
         run: |
           gcloud compute scp .env vm-public:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
-          
+
+      - name: Deploy Production
+        run: |
           gcloud compute ssh vm-public \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
-              cd ~/student-management && \
-              git fetch origin && \
-              git checkout main && \
-              git pull origin main && \
-              npm install && \
-              cp ~/.env ./ && \
-              pm2 restart student-app && \
-              pm2 save && \
-              sleep 3 && \
+              cd ~/student-management &&
+              git fetch origin &&
+              git checkout main &&
+              git pull origin main &&
+              npm ci &&
+              cp ~/.env ./.env &&
+              pm2 describe student-app >/dev/null 2>&1 &&
+              pm2 restart student-app --update-env ||
+              pm2 start server.js --name student-app --update-env &&
+              pm2 save &&
               pm2 status
             "
 
-      - name: Health Check
+      - name: Production Health Check
         run: |
-          sleep 5
-          curl -f https://student.mydevops1.xyz || exit 1
+          sleep 10
+          curl --retry 10 \
+               --retry-delay 5 \
+               --fail \
+               https://student.mydevops1.xyz
 
       - name: Create Release Tag
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git tag -a v${{ github.run_number }} -m "Production release v${{ github.run_number }}" || true
-          git push origin v${{ github.run_number }} 2>/dev/null || true
+          git tag -a v${{ github.run_number }} \
+            -m "Production Release v${{ github.run_number }}" || true
+          git push origin v${{ github.run_number }} || true
 
       - name: Rollback on Failure
         if: failure()
@@ -252,14 +289,17 @@ jobs:
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
-              cd ~ && \
-              LATEST_BACKUP=\$(ls -dt student-management-backup-* 2>/dev/null | head -1) && \
+              cd ~ &&
+              LATEST_BACKUP=\$(ls -dt student-management-backup-* | head -1)
+
               if [ -n \"\$LATEST_BACKUP\" ]; then
-                rm -rf ~/student-management && \
-                mv \$LATEST_BACKUP ~/student-management && \
-                cd ~/student-management && \
-                pm2 restart student-app && \
-                echo 'Rollback completed'
+                rm -rf ~/student-management
+                mv \$LATEST_BACKUP ~/student-management
+                cd ~/student-management
+                pm2 restart student-app --update-env
+                pm2 save
+                echo Rollback Completed
+              else
+                echo No Backup Found
               fi
             "
-

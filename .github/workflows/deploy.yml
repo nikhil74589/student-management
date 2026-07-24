@@ -252,12 +252,13 @@ jobs:
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
+              git config --global --add safe.directory /home/nikhil_ranjan/student-management &&
               cd /home/nikhil_ranjan/student-management &&
               git fetch origin &&
               git checkout main &&
               git pull origin main &&
               npm ci &&
-              cp /home/YOUR_VM_USERNAME/.env ./.env &&
+              cp /home/nikhil_ranjan/.env ./.env &&
               if pm2 describe student-app >/dev/null 2>&1; then
                 pm2 restart student-app --update-env
               else

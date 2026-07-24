@@ -252,7 +252,7 @@ jobs:
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="
-              cd /home/nikhil-ranjan/student-management &&
+              cd /home/nikhil_ranjan/student-management &&
               git fetch origin &&
               git checkout main &&
               git pull origin main &&

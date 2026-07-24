@@ -48,10 +48,10 @@ jobs:
         run: |
           npm run build || echo "Build script not configured"
 
-  # ================= 2. DEV =================
+  # ================= 2. DEV (vm-public, Port 3001) =================
   deploy-dev:
     name: Deploy Development
-    needs: build # <--- Build ke baad chalega
+    needs: build
     runs-on: ubuntu-latest
 
     environment:
@@ -83,20 +83,22 @@ jobs:
           NODE_ENV=development
           ENVIRONMENT=dev
           EOF
+
       - name: Generate SSH Key for gcloud
         run: |
           mkdir -p ~/.ssh
           ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
           chmod 400 ~/.ssh/google_compute_engine
+
       - name: Upload .env
         run: |
-          gcloud compute scp .env vm-dev:~/ \
+          gcloud compute scp .env vm-public:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
 
       - name: Deploy Dev
         run: |
-          gcloud compute ssh vm-dev \
+          gcloud compute ssh vm-public \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="bash -lc '
@@ -118,10 +120,10 @@ jobs:
           sleep 10
           curl --retry 5 --retry-delay 5 --fail http://dev-student.mydevops1.xyz
 
-  # ================= 3. QA =================
+  # ================= 3. QA (vm-public, Port 3002) =================
   deploy-qa:
     name: Deploy QA
-    needs: deploy-dev # <--- Dev pass hone ke baad chalega
+    needs: deploy-dev
     runs-on: ubuntu-latest
 
     environment:
@@ -153,20 +155,22 @@ jobs:
           NODE_ENV=staging
           ENVIRONMENT=qa
           EOF
+
       - name: Generate SSH Key for gcloud
         run: |
           mkdir -p ~/.ssh
           ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
           chmod 400 ~/.ssh/google_compute_engine
+
       - name: Upload .env
         run: |
-          gcloud compute scp .env vm-qa:~/ \
+          gcloud compute scp .env vm-public:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
 
       - name: Deploy QA
         run: |
-          gcloud compute ssh vm-qa \
+          gcloud compute ssh vm-public \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
             --command="bash -lc '
@@ -192,10 +196,10 @@ jobs:
                --fail \
                http://qa-student.mydevops1.xyz
 
-  # ================= 4. PRODUCTION =================
+  # ================= 4. PRODUCTION (vm-public, Port 3000) =================
   deploy-prod:
     name: Deploy Production
-    needs: deploy-qa # <--- QA pass hone ke baad chalega
+    needs: deploy-qa
     runs-on: ubuntu-latest
 
     environment:
@@ -227,11 +231,12 @@ jobs:
           NODE_ENV=production
           ENVIRONMENT=prod
           EOF
+
       - name: Generate SSH Key for gcloud
         run: |
           mkdir -p ~/.ssh
           ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
-          chmod 400 ~/.ssh/google_compute_engine    
+          chmod 400 ~/.ssh/google_compute_engine
 
       - name: Upload .env
         run: |

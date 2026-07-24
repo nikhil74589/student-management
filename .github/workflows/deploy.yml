@@ -83,7 +83,11 @@ jobs:
           NODE_ENV=development
           ENVIRONMENT=dev
           EOF
-
+      - name: Generate SSH Key for gcloud
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
+          chmod 400 ~/.ssh/google_compute_engine
       - name: Upload .env
         run: |
           gcloud compute scp .env vm-dev:~/ \
@@ -149,7 +153,11 @@ jobs:
           NODE_ENV=staging
           ENVIRONMENT=qa
           EOF
-
+      - name: Generate SSH Key for gcloud
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
+          chmod 400 ~/.ssh/google_compute_engine
       - name: Upload .env
         run: |
           gcloud compute scp .env vm-qa:~/ \
@@ -219,6 +227,11 @@ jobs:
           NODE_ENV=production
           ENVIRONMENT=prod
           EOF
+      - name: Generate SSH Key for gcloud
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
+          chmod 400 ~/.ssh/google_compute_engine    
 
       - name: Upload .env
         run: |

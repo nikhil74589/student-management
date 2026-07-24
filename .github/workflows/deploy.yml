@@ -254,23 +254,26 @@ jobs:
       - name: Deploy Production
         run: |
           gcloud compute ssh vm-public \
-           --zone=${{ env.GCP_ZONE }} \
-           --quiet \
-           --command='
-             cd \$HOME/student-management &&
-             git fetch origin &&
-             git checkout main &&
-             git pull origin main &&
-             npm ci &&
-             cp \$HOME/.env ./.env &&
-             if pm2 describe student-app >/dev/null 2>&1; then
-             pm2 restart student-app --update-env
-             else
-             pm2 start server.js --name student-app --update-env
-             fi &&
-             pm2 save &&
-             pm2 status
-           '
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="bash -lc '
+              cd ~/student-management
+              git config --global --add safe.directory ~/student-management
+              git fetch origin
+              git checkout main
+              git pull origin main
+              npm ci
+              cp ~/.env ./.env
+
+              if pm2 describe student-app >/dev/null 2>&1; then
+                pm2 restart student-app --update-env
+              else
+                pm2 start server.js --name student-app --update-env
+              fi
+
+              pm2 save
+              pm2 status
+            '"
 
       - name: Production Health Check
         run: |

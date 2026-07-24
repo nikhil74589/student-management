@@ -3,15 +3,14 @@ name: CI/CD Pipeline - Dev, QA, Prod
 on:
   push:
     branches:
+      - main
       - develop
       - staging
-      - main
-
   pull_request:
     branches:
+      - main
       - develop
       - staging
-      - main
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -19,7 +18,7 @@ env:
 
 jobs:
 
-  # ================= BUILD =================
+  # ================= 1. BUILD & TEST =================
   build:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -49,20 +48,17 @@ jobs:
         run: |
           npm run build || echo "Build script not configured"
 
-  # ================= DEV =================
+  # ================= 2. DEV =================
   deploy-dev:
     name: Deploy Development
-    needs: build
+    needs: build # <--- Build ke baad chalega
     runs-on: ubuntu-latest
-
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     environment:
       name: development
       url: http://dev-student.mydevops1.xyz
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -78,12 +74,6 @@ jobs:
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
-          gcloud auth list
-
-      - name: Check Authenticated Account
-        run: |
-          gcloud auth list
-          gcloud config list
 
       - name: Create .env
         run: |
@@ -111,8 +101,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
-              git checkout develop
-              git pull origin develop
+              git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
               pm2 delete student-app-dev || true
@@ -125,20 +114,17 @@ jobs:
           sleep 10
           curl --retry 5 --retry-delay 5 --fail http://dev-student.mydevops1.xyz
 
-  # ================= QA =================
+  # ================= 3. QA =================
   deploy-qa:
     name: Deploy QA
-    needs: build
+    needs: deploy-dev # <--- Dev pass hone ke baad chalega
     runs-on: ubuntu-latest
-
-    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
 
     environment:
       name: qa
       url: http://qa-student.mydevops1.xyz
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -154,7 +140,6 @@ jobs:
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
-          gcloud auth list
 
       - name: Create .env
         run: |
@@ -182,8 +167,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
-              git checkout staging
-              git pull origin staging
+              git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
               pm2 delete student-app-qa || true
@@ -200,20 +184,17 @@ jobs:
                --fail \
                http://qa-student.mydevops1.xyz
 
-  # ================= PRODUCTION =================
+  # ================= 4. PRODUCTION =================
   deploy-prod:
     name: Deploy Production
-    needs: build
+    needs: deploy-qa # <--- QA pass hone ke baad chalega
     runs-on: ubuntu-latest
-
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     environment:
       name: production
       url: https://student.mydevops1.xyz
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -229,7 +210,6 @@ jobs:
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ env.GCP_ZONE }}
-          gcloud auth list
 
       - name: Create Production .env
         run: |
@@ -261,8 +241,7 @@ jobs:
               cd ~/student-management
               git config --global --add safe.directory ~/student-management
               git fetch origin
-              git checkout main
-              git pull origin main
+              git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
 

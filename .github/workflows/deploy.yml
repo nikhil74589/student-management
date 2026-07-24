@@ -245,6 +245,12 @@ jobs:
           gcloud compute scp .env vm-public:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
+      - name: Debug VM User
+        run: |
+          gcloud compute ssh vm-public \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="whoami && echo \$HOME && ls -ld \$HOME/student-management && ls -l \$HOME/student-management/.git/FETCH_HEAD"      
 
       - name: Deploy Production
         run: |

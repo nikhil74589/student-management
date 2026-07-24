@@ -268,7 +268,7 @@ jobs:
 
          pm2 save
          pm2 status
-        '
+       '
 
       - name: Production Health Check
         run: |

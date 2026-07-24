@@ -189,13 +189,11 @@ jobs:
               pm2 status
             '"
 
-      - name: Health Check
+      - name: Health Check (QA)
         run: |
           sleep 10
-          curl --retry 5 \
-               --retry-delay 5 \
-               --fail \
-               http://qa-student.mydevops1.xyz
+          VM_IP=$(gcloud compute instances describe vm-public --zone=${{ env.GCP_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+          curl --retry 5 --retry-delay 5 --fail --resolve qa-student.mydevops1.xyz:80:$VM_IP http://qa-student.mydevops1.xyz
 
   # ================= 4. PRODUCTION (vm-public, Port 3000) =================
   deploy-prod:
@@ -277,10 +275,8 @@ jobs:
       - name: Production Health Check
         run: |
           sleep 10
-          curl --retry 10 \
-               --retry-delay 5 \
-               --fail \
-               https://student.mydevops1.xyz
+          VM_IP=$(gcloud compute instances describe vm-public --zone=${{ env.GCP_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+          curl --retry 10 --retry-delay 5 --fail --resolve student.mydevops1.xyz:443:$VM_IP https://student.mydevops1.xyz
 
       - name: Create Release Tag
         run: |

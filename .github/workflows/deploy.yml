@@ -95,7 +95,7 @@ jobs:
           EOF
 
       - name: Upload .env
-        run: |
+        run: | 
           gcloud compute scp .env vm-dev:~/ \
             --zone=${{ env.GCP_ZONE }} \
             --quiet
@@ -235,19 +235,11 @@ jobs:
           EOF
 
       - name: Debug VM
-  run: |
-    gcloud compute ssh vm-public \
-      --zone=${{ env.GCP_ZONE }} \
-      --quiet \
-      --command='
-        echo "===== DEBUG ====="
-        echo "HOME=$HOME"
-        pwd
-        whoami
-        ls -la
-        ls -la $HOME
-        find $HOME -maxdepth 2 -type d
-      '
+        run: |
+          gcloud compute ssh vm-public \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="pwd && whoami && echo HOME=\$HOME && ls -la \$HOME && find \$HOME -maxdepth 2 -type d"
 
       - name: Upload .env
         run: |

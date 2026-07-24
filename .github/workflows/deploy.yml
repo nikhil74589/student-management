@@ -56,7 +56,7 @@ jobs:
 
     environment:
       name: development
-      url: http://dev-student.mydevops1.xyz
+      url: https://dev-student.mydevops1.xyz
 
     steps:
       - name: Checkout
@@ -119,7 +119,7 @@ jobs:
         run: |
           sleep 10
           VM_IP=$(gcloud compute instances describe vm-public --zone=${{ env.GCP_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-          curl --retry 5 --retry-delay 5 --fail --resolve dev-student.mydevops1.xyz:80:$VM_IP http://dev-student.mydevops1.xyz
+          curl --retry 5 --retry-delay 5 --fail --resolve dev-student.mydevops1.xyz:443:$VM_IP https://dev-student.mydevops1.xyz
 
   # ================= 3. QA (vm-public, Port 3002) =================
   deploy-qa:
@@ -129,7 +129,7 @@ jobs:
 
     environment:
       name: qa
-      url: http://qa-student.mydevops1.xyz
+      url: https://qa-student.mydevops1.xyz
 
     steps:
       - name: Checkout
@@ -193,7 +193,7 @@ jobs:
         run: |
           sleep 10
           VM_IP=$(gcloud compute instances describe vm-public --zone=${{ env.GCP_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-          curl --retry 5 --retry-delay 5 --fail --resolve qa-student.mydevops1.xyz:80:$VM_IP http://qa-student.mydevops1.xyz
+          curl --retry 5 --retry-delay 5 --fail --resolve qa-student.mydevops1.xyz:443:$VM_IP https://qa-student.mydevops1.xyz
 
   # ================= 4. PRODUCTION (vm-public, Port 3000) =================
   deploy-prod:

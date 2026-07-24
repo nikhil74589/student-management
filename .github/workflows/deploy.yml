@@ -250,7 +250,13 @@ jobs:
           gcloud compute ssh vm-public \
             --zone=${{ env.GCP_ZONE }} \
             --quiet \
-            --command="whoami && echo \$HOME && ls -ld \$HOME/student-management"      
+            --command="whoami && echo \$HOME && ls -ld \$HOME/student-management" 
+      - name: Test SSH
+        run: |
+          gcloud compute ssh vm-public \
+            --zone=${{ env.GCP_ZONE }} \
+            --quiet \
+            --command="hostname"      
       - name: Deploy Production
         run: |
           gcloud compute ssh vm-public \

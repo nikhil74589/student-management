@@ -4,33 +4,35 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+
+// Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static('public'));
 
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/studentDB';
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB Connected Successfully'))
+  .then(() => console.log('MongoDB Connected'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
-// Student Schema
+// Schema Definition with Fallbacks
 const studentSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  fatherName: { type: String, required: true },
-  degree: { type: String, required: true },
-  mobile: { type: String, required: true },
-  email: { type: String, required: true },
-  address: { type: String, required: true },
-  background: { type: String, required: true },
-  membership: { type: String, default: 'Basic' },
-  freeBook: { type: String, default: 'None' },
-  createdAt: { type: Date, default: Date.now }
-});
+  fatherName: { type: String, default: '' },
+  degree: { type: String, default: '' },
+  mobile: { type: String, default: '' },
+  email: { type: String, default: '' },
+  address: { type: String, default: '' },
+  background: { type: String, default: '' },
+  membership: { type: String, default: 'Basic (Free)' },
+  freeBook: { type: String, default: 'None' }
+}, { timestamps: true });
 
 const Student = mongoose.model('Student', studentSchema);
 
-// API Routes
+// GET API
 app.get('/api/students', async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
@@ -40,33 +42,49 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
+// POST API - Fixed Error Response Log
 app.post('/api/students', async (req, res) => {
   try {
-    const newStudent = new Student(req.body);
-    await newStudent.save();
-    res.status(201).json(newStudent);
+    console.log('Received Payload:', req.body);
+    const newStudent = new Student({
+      fullName: req.body.fullName || 'N/A',
+      fatherName: req.body.fatherName || 'N/A',
+      degree: req.body.degree || 'N/A',
+      mobile: req.body.mobile || 'N/A',
+      email: req.body.email || 'N/A',
+      address: req.body.address || 'N/A',
+      background: req.body.background || 'N/A',
+      membership: req.body.membership || 'Basic (Free)',
+      freeBook: req.body.freeBook || 'None'
+    });
+
+    const savedStudent = await newStudent.save();
+    res.status(201).json(savedStudent);
   } catch (err) {
-    res.status(400).json({ error: 'Error adding student record' });
+    console.error('Save Error:', err.message);
+    res.status(400).json({ error: err.message });
   }
 });
 
+// PUT API
 app.put('/api/students/:id', async (req, res) => {
   try {
     const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updatedStudent);
   } catch (err) {
-    res.status(400).json({ error: 'Error updating student' });
+    res.status(400).json({ error: err.message });
   }
 });
 
+// DELETE API
 app.delete('/api/students/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Student deleted successfully' });
+    res.json({ message: 'Deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: 'Error deleting student' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

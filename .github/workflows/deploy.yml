@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-      - staging
+      - qa
       - main
 
 env:
@@ -47,7 +47,6 @@ jobs:
   deploy-dev:
     name: Deploy Development
     needs: build
-    # Yeh job tabhi chalega jab branch 'develop' ho YA 'main' ho
     if: github.ref_name == 'develop' || github.ref_name == 'main'
     runs-on: ubuntu-latest
 
@@ -104,6 +103,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
@@ -122,12 +122,11 @@ jobs:
   deploy-qa:
     name: Deploy QA
     needs: [build, deploy-dev]
-    # Staging branch par direct chalao, YA main branch par tabhi chalao jab deploy-dev success ho
     if: |
       always() &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
-      (github.ref_name == 'staging' || github.ref_name == 'main')
+      (github.ref_name == 'qa' || github.ref_name == 'main')
     runs-on: ubuntu-latest
 
     environment:
@@ -183,6 +182,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
@@ -202,7 +202,6 @@ jobs:
   deploy-prod:
     name: Deploy Production
     needs: [build, deploy-qa]
-    # Sirf main branch par aur jab previous jobs fail/cancel na huye hon
     if: |
       always() &&
       !contains(needs.*.result, 'failure') &&
@@ -267,6 +266,7 @@ jobs:
               cd ~/student-management
               git config --global --add safe.directory ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env

@@ -18,24 +18,38 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected Successfully'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
-// Student Schema Definition
+// Student Schema (Supporting both legacy & new field names)
 const studentSchema = new mongoose.Schema({
+  // Legacy / Old Required Fields Mapping
+  name: { type: String },
+  city: { type: String },
+  
+  // New Schema Fields
   fullName: { type: String, required: true },
-  fatherName: { type: String, default: '' },
-  degree: { type: String, default: '' },
-  mobile: { type: String, default: '' },
-  email: { type: String, default: '' },
-  address: { type: String, default: '' },
-  background: { type: String, default: '' },
+  fatherName: { type: String, default: 'N/A' },
+  degree: { type: String, default: 'N/A' },
+  mobile: { type: String, default: 'N/A' },
+  email: { type: String, default: 'N/A' },
+  address: { type: String, default: 'N/A' },
+  background: { type: String, default: 'N/A' },
   membership: { type: String, default: 'Basic (Free)' },
   freeBook: { type: String, default: 'None' }
 }, { timestamps: true });
 
+// Schema pre-save hook to ensure 'name' and 'city' are never empty
+studentSchema.pre('validate', function(next) {
+  if (!this.name && this.fullName) {
+    this.name = this.fullName;
+  }
+  if (!this.city && this.address) {
+    this.city = this.address;
+  }
+  next();
+});
+
 const Student = mongoose.model('Student', studentSchema);
 
-// API Routes
-
-// Get all students
+// GET API
 app.get('/api/students', async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
@@ -46,17 +60,21 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
-// Create new student
+// POST API
 app.post('/api/students', async (req, res) => {
   try {
-    console.log('Incoming Data:', req.body);
+    const nameVal = req.body.fullName || req.body.name || 'N/A';
+    const cityVal = req.body.address || req.body.city || 'N/A';
+
     const newStudent = new Student({
-      fullName: req.body.fullName || 'N/A',
+      name: nameVal,
+      city: cityVal,
+      fullName: nameVal,
       fatherName: req.body.fatherName || 'N/A',
       degree: req.body.degree || 'N/A',
       mobile: req.body.mobile || 'N/A',
       email: req.body.email || 'N/A',
-      address: req.body.address || 'N/A',
+      address: cityVal,
       background: req.body.background || 'N/A',
       membership: req.body.membership || 'Basic (Free)',
       freeBook: req.body.freeBook || 'None'
@@ -70,13 +88,17 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
-// Update student
+// PUT API
 app.put('/api/students/:id', async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    if (updateData.fullName) updateData.name = updateData.fullName;
+    if (updateData.address) updateData.city = updateData.address;
+
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id, 
-      req.body, 
-      { new: true, runValidators: true }
+      updateData, 
+      { new: true, runValidators: false }
     );
     res.status(200).json(updatedStudent);
   } catch (err) {
@@ -85,7 +107,7 @@ app.put('/api/students/:id', async (req, res) => {
   }
 });
 
-// Delete student
+// DELETE API
 app.delete('/api/students/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
@@ -94,11 +116,6 @@ app.delete('/api/students/:id', async (req, res) => {
     console.error('DELETE Error:', err.message);
     res.status(500).json({ error: 'Failed to delete student' });
   }
-});
-
-// Serve frontend for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;

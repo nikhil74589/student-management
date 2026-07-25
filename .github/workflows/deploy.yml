@@ -48,7 +48,6 @@ jobs:
   deploy-dev:
     name: Deploy Development
     needs: build
-    # Runs when pushed to 'develop' OR 'main'
     if: github.ref_name == 'develop' || github.ref_name == 'main'
     runs-on: ubuntu-latest
 
@@ -104,6 +103,8 @@ jobs:
                 git clone https://github.com/${{ github.repository }}.git ~/student-management
               fi
               cd ~/student-management
+              git config --global --add safe.directory ~/student-management
+              git reset --hard
               git fetch origin
               git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
@@ -124,7 +125,6 @@ jobs:
   deploy-qa:
     name: Deploy QA
     needs: [build, deploy-dev]
-    # Runs independently on 'qa' OR after 'deploy-dev' on 'main'
     if: |
       always() &&
       !contains(needs.*.result, 'failure') &&
@@ -184,6 +184,8 @@ jobs:
                 git clone https://github.com/${{ github.repository }}.git ~/student-management
               fi
               cd ~/student-management
+              git config --global --add safe.directory ~/student-management
+              git reset --hard
               git fetch origin
               git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
@@ -205,7 +207,6 @@ jobs:
   deploy-prod:
     name: Deploy Production
     needs: [build, deploy-qa]
-    # Runs independently on 'prod' OR after 'deploy-qa' on 'main'
     if: |
       always() &&
       !contains(needs.*.result, 'failure') &&
@@ -269,6 +270,7 @@ jobs:
 
               cd ~/student-management
               git config --global --add safe.directory ~/student-management
+              git reset --hard
               git fetch origin
               git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}

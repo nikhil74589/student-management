@@ -18,11 +18,11 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected Successfully'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
-// Schema Definition (Backward compatible for old & new fields)
+// COMPLETELY FLEXIBLE SCHEMA (No rigid rules, accepts everything)
 const studentSchema = new mongoose.Schema({
-  name: { type: String },
-  city: { type: String },
-  fullName: { type: String, required: true },
+  name: { type: String, default: 'Student' },
+  city: { type: String, default: 'City' },
+  fullName: { type: String, default: 'Student' },
   fatherName: { type: String, default: 'N/A' },
   degree: { type: String, default: 'N/A' },
   mobile: { type: String, default: 'N/A' },
@@ -31,17 +31,9 @@ const studentSchema = new mongoose.Schema({
   background: { type: String, default: 'N/A' },
   membership: { type: String, default: 'Basic (Free)' },
   freeBook: { type: String, default: 'None' }
-}, { timestamps: true });
-
-// Auto-fill legacy fields before MongoDB validation runs
-studentSchema.pre('validate', function(next) {
-  if (!this.name && this.fullName) {
-    this.name = this.fullName;
-  }
-  if (!this.city && this.address) {
-    this.city = this.address;
-  }
-  next();
+}, { 
+  timestamps: true,
+  strict: false // Flexible mode ON
 });
 
 const Student = mongoose.model('Student', studentSchema);
@@ -56,44 +48,40 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
-// POST API
+// POST API - Full Safety Payload Assignment
 app.post('/api/students', async (req, res) => {
   try {
-    const nameVal = req.body.fullName || req.body.name || 'N/A';
-    const cityVal = req.body.address || req.body.city || 'N/A';
+    const body = req.body || {};
+    const nameVal = body.fullName || body.name || 'Student';
+    const addressVal = body.address || body.city || 'Address';
 
     const newStudent = new Student({
+      ...body,
       name: nameVal,
-      city: cityVal,
+      city: addressVal,
       fullName: nameVal,
-      fatherName: req.body.fatherName || 'N/A',
-      degree: req.body.degree || 'N/A',
-      mobile: req.body.mobile || 'N/A',
-      email: req.body.email || 'N/A',
-      address: cityVal,
-      background: req.body.background || 'N/A',
-      membership: req.body.membership || 'Basic (Free)',
-      freeBook: req.body.freeBook || 'None'
+      address: addressVal
     });
 
     const savedStudent = await newStudent.save();
+    console.log("Saved Document:", savedStudent);
     res.status(201).json(savedStudent);
   } catch (err) {
-    console.error('POST Error:', err.message);
-    res.status(400).json({ error: err.message });
+    console.error('POST Error:', err);
+    res.status(400).json({ error: err.message || 'Error saving student' });
   }
 });
 
 // PUT API
 app.put('/api/students/:id', async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (updateData.fullName) updateData.name = updateData.fullName;
-    if (updateData.address) updateData.city = updateData.address;
+    const body = req.body || {};
+    if (body.fullName) body.name = body.fullName;
+    if (body.address) body.city = body.address;
 
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id, 
-      updateData, 
+      body, 
       { new: true, runValidators: false }
     );
     res.status(200).json(updatedStudent);
@@ -106,7 +94,7 @@ app.put('/api/students/:id', async (req, res) => {
 app.delete('/api/students/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: 'Deleted successfully' });
+    res.status(200).json({ message: 'Student deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete student' });
   }

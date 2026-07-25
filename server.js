@@ -18,13 +18,10 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected Successfully'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
-// Student Schema (Supporting both legacy & new field names)
+// Schema Definition (Backward compatible for old & new fields)
 const studentSchema = new mongoose.Schema({
-  // Legacy / Old Required Fields Mapping
   name: { type: String },
   city: { type: String },
-  
-  // New Schema Fields
   fullName: { type: String, required: true },
   fatherName: { type: String, default: 'N/A' },
   degree: { type: String, default: 'N/A' },
@@ -36,7 +33,7 @@ const studentSchema = new mongoose.Schema({
   freeBook: { type: String, default: 'None' }
 }, { timestamps: true });
 
-// Schema pre-save hook to ensure 'name' and 'city' are never empty
+// Auto-fill legacy fields before MongoDB validation runs
 studentSchema.pre('validate', function(next) {
   if (!this.name && this.fullName) {
     this.name = this.fullName;
@@ -55,7 +52,6 @@ app.get('/api/students', async (req, res) => {
     const students = await Student.find().sort({ createdAt: -1 });
     res.status(200).json(students);
   } catch (err) {
-    console.error('GET Error:', err);
     res.status(500).json({ error: 'Failed to fetch students' });
   }
 });
@@ -102,7 +98,6 @@ app.put('/api/students/:id', async (req, res) => {
     );
     res.status(200).json(updatedStudent);
   } catch (err) {
-    console.error('PUT Error:', err.message);
     res.status(400).json({ error: err.message });
   }
 });
@@ -111,9 +106,8 @@ app.put('/api/students/:id', async (req, res) => {
 app.delete('/api/students/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: 'Student deleted successfully' });
+    res.status(200).json({ message: 'Deleted successfully' });
   } catch (err) {
-    console.error('DELETE Error:', err.message);
     res.status(500).json({ error: 'Failed to delete student' });
   }
 });

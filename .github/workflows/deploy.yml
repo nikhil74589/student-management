@@ -3,16 +3,11 @@ name: CI/CD Pipeline - Dev, QA, Prod
 on:
   push:
     branches:
-      - main
       - dev
+      - develop
       - qa
-      - prod
-  pull_request:
-    branches:
+      - staging
       - main
-      - dev
-      - qa
-      - prod  
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -50,10 +45,11 @@ jobs:
         run: |
           npm run build || echo "Build script not configured"
 
-  # ================= 2. DEV (vm-public, Port 3001) =================
+  # ================= 2. DEV DEPLOYMENT =================
   deploy-dev:
     name: Deploy Development
     needs: build
+    if: github.ref_name == 'dev' || github.ref_name == 'develop'
     runs-on: ubuntu-latest
 
     environment:
@@ -109,6 +105,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
@@ -123,10 +120,11 @@ jobs:
           VM_IP=$(gcloud compute instances describe vm-public --zone=${{ env.GCP_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
           curl --retry 5 --retry-delay 5 --fail --resolve dev-student.mydevops1.xyz:443:$VM_IP https://dev-student.mydevops1.xyz
 
-  # ================= 3. QA (vm-public, Port 3002) =================
+  # ================= 3. QA DEPLOYMENT =================
   deploy-qa:
     name: Deploy QA
-    needs: deploy-dev
+    needs: build
+    if: github.ref_name == 'qa' || github.ref_name == 'staging'
     runs-on: ubuntu-latest
 
     environment:
@@ -182,6 +180,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
@@ -197,10 +196,11 @@ jobs:
           VM_IP=$(gcloud compute instances describe vm-public --zone=${{ env.GCP_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
           curl --retry 5 --retry-delay 5 --fail --resolve qa-student.mydevops1.xyz:443:$VM_IP https://qa-student.mydevops1.xyz
 
-  # ================= 4. PRODUCTION (vm-public, Port 3000) =================
+  # ================= 4. PRODUCTION DEPLOYMENT =================
   deploy-prod:
     name: Deploy Production
-    needs: deploy-qa
+    needs: build
+    if: github.ref_name == 'main' || github.ref_name == 'master'
     runs-on: ubuntu-latest
 
     environment:
@@ -260,6 +260,7 @@ jobs:
               cd ~/student-management
               git config --global --add safe.directory ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env

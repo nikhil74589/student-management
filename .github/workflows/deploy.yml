@@ -112,8 +112,9 @@ jobs:
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
+              pm2 delete student-dev || true
               pm2 delete student-app-dev || true
-              pm2 start server.js --name student-app-dev --update-env
+              pm2 start server.js --name student-dev --update-env
               pm2 save
             '"
 
@@ -126,7 +127,6 @@ jobs:
   # ================= 3. QA (vm-public, Port 3002) =================
   deploy-qa:
     name: Deploy QA
-    # Changes made here: Always runs after deploy-dev OR directly after build if pushing to 'qa' branch
     needs: [build, deploy-dev]
     if: always() && (github.ref_name == 'qa' || (github.ref_name == 'main' && needs.deploy-dev.result == 'success'))
     runs-on: ubuntu-latest
@@ -188,8 +188,9 @@ jobs:
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
+              pm2 delete student-qa || true
               pm2 delete student-app-qa || true
-              pm2 start server.js --name student-app-qa --update-env
+              pm2 start server.js --name student-qa --update-env
               pm2 save
               pm2 status
             '"
@@ -203,7 +204,6 @@ jobs:
   # ================= 4. PRODUCTION (vm-public, Port 3000) =================
   deploy-prod:
     name: Deploy Production
-    # Changes made here: Always runs after deploy-qa
     needs: [build, deploy-qa]
     if: always() && github.ref_name == 'main' && needs.deploy-qa.result == 'success'
     runs-on: ubuntu-latest
@@ -270,11 +270,9 @@ jobs:
               npm ci
               cp ~/.env ./.env
 
-              if pm2 describe student-app >/dev/null 2>&1; then
-                pm2 restart student-app --update-env
-              else
-                pm2 start server.js --name student-app --update-env
-              fi
+              pm2 delete student-prod || true
+              pm2 delete student-app || true
+              pm2 start server.js --name student-prod --update-env
 
               pm2 save
               pm2 status
@@ -308,7 +306,7 @@ jobs:
                 rm -rf ~/student-management
                 mv \$LATEST_BACKUP ~/student-management
                 cd ~/student-management
-                pm2 restart student-app --update-env
+                pm2 restart student-prod --update-env
                 pm2 save
                 echo \"Rollback Completed\"
               else

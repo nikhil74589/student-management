@@ -1,3 +1,6 @@
+// 1. Load dotenv on top (Fixes PORT and MONGO_URI from .env file)
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -86,5 +89,10 @@ app.delete('/api/students/:id', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Dynamic PORT Parsing & 0.0.0.0 Interface Binding Fix
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const ENV = process.env.NODE_ENV || 'development';
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT} [ENV: ${ENV}]`);
+});

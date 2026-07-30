@@ -3,191 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Library - Student Management Portal</title>
-    <!-- Google Fonts & FontAwesome Icons -->
+    <title>Cognitive Digital Library & Learning Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #0f172a;
-            --surface: #1e293b;
-            --surface-card: rgba(30, 41, 59, 0.7);
+            --bg: #0b0f19;
+            --surface: #151c2c;
+            --surface-card: rgba(21, 28, 44, 0.75);
+            --border: #222f43;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #334155;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
             --accent-green: #10b981;
             --accent-amber: #f59e0b;
-            --accent-red: #ef4444;
         }
 
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s ease-in-out; }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         
         body { 
-            margin: 0; 
-            padding: 24px; 
-            background: radial-gradient(circle at top left, #1e1b4b, #0f172a 50%); 
-            color: var(--text-main); 
-            min-height: 100vh; 
+            margin: 0; padding: 20px; 
+            background: radial-gradient(circle at 20% 10%, #1e1b4b 0%, #0b0f19 70%); 
+            color: var(--text-main); min-height: 100vh; 
         }
 
-        /* HEADER SECTION */
+        /* HEADER & COGNITIVE HUD */
         .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            max-width: 1400px; 
-            margin: 0 auto 25px auto; 
-            background: rgba(30, 41, 59, 0.6); 
-            backdrop-filter: blur(12px);
-            padding: 16px 28px; 
-            border-radius: 16px; 
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+            display: flex; justify-content: space-between; align-items: center; 
+            max-width: 1440px; margin: 0 auto 20px auto; 
+            background: rgba(21, 28, 44, 0.7); backdrop-filter: blur(16px);
+            padding: 16px 28px; border-radius: 20px; border: 1px solid var(--border);
         }
 
         .brand-title { display: flex; align-items: center; gap: 12px; }
         .brand-icon { 
-            background: linear-gradient(135deg, #6366f1, #a855f7); 
-            padding: 10px; 
-            border-radius: 12px; 
-            color: white; 
-            font-size: 20px; 
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); 
+            padding: 12px; border-radius: 14px; color: white; font-size: 22px; 
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
         }
-        .brand-title h2 { margin: 0; font-size: 20px; font-weight: 800; tracking: -0.5px; }
 
-        .header-right { display: flex; align-items: center; gap: 20px; }
-        .admin-contact { display: flex; align-items: center; gap: 15px; background: rgba(15, 23, 42, 0.6); padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); }
+        /* COGNITIVE PUZZLE STRIP */
+        .puzzle-strip {
+            max-width: 1440px; margin: 0 auto 24px auto;
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.15));
+            border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 14px 24px;
+            display: flex; justify-content: space-between; align-items: center; gap: 15px;
+        }
+        .puzzle-text { font-size: 13px; color: #cbd5e1; display: flex; align-items: center; gap: 10px; }
+        .puzzle-text i { color: var(--accent-amber); font-size: 16px; }
+        .btn-solve { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; }
+        .btn-solve:hover { background: var(--accent-amber); color: black; }
+
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .admin-contact { display: flex; align-items: center; gap: 15px; background: rgba(11, 15, 25, 0.6); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border); }
         .contact-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
-        .contact-item i { color: #818cf8; }
-        .contact-item strong { color: var(--text-main); font-weight: 600; }
+        .contact-item i { color: var(--accent-cyan); }
 
         .btn-admin { 
-            background: linear-gradient(135deg, #6366f1, #4f46e5); 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 10px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            font-size: 14px; 
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg, var(--accent-purple), #6366f1); 
+            color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 13px;
         }
-        .btn-admin:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
 
-        /* MAIN LAYOUT GRID */
-        .wrapper { display: grid; grid-template-columns: 420px 1fr; gap: 24px; max-width: 1400px; margin: auto; }
+        /* LAYOUT GRID */
+        .wrapper { display: grid; grid-template-columns: 440px 1fr; gap: 24px; max-width: 1440px; margin: auto; }
 
         .card { 
-            background: var(--surface-card); 
-            backdrop-filter: blur(16px);
-            padding: 24px; 
-            border-radius: 20px; 
-            border: 1px solid var(--border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: var(--surface-card); backdrop-filter: blur(16px);
+            padding: 24px; border-radius: 20px; border: 1px solid var(--border);
         }
 
         .card-title { 
-            font-size: 18px; 
-            font-weight: 700; 
-            margin-bottom: 20px; 
-            color: var(--text-main); 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+            font-size: 17px; font-weight: 800; margin-bottom: 20px; color: var(--text-main); 
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 12px;
         }
 
-        /* FORM ELEMENTS */
+        /* FORM STYLES */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .full-width { grid-column: span 2; }
         .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         input, select { 
-            width: 100%; 
-            padding: 10px 12px; 
-            background: rgba(15, 23, 42, 0.8); 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            color: white; 
-            font-size: 13px; 
+            width: 100%; padding: 10px 12px; background: #0b0f19; 
+            border: 1px solid var(--border); border-radius: 10px; color: white; font-size: 13px; 
         }
-        input:focus, select:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2); }
+        input:focus, select:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25); }
 
         .btn-submit { 
-            width: 100%; 
-            padding: 12px; 
-            background: linear-gradient(135deg, #10b981, #059669); 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            font-weight: 700; 
-            font-size: 14px; 
-            cursor: pointer; 
-            margin-top: 10px;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent-green), #059669); 
+            color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 8px;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4); }
-        
-        .btn-cancel {
-            width: 100%; padding: 10px; background: #64748b; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 6px; display: none;
-        }
+        .btn-cancel { width: 100%; padding: 10px; background: #475569; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 6px; display: none; }
 
-        /* DIRECTORY / TABLE STYLES */
-        .table-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .search-box { position: relative; width: 260px; }
-        .search-box input { padding-left: 36px; }
-        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
-
+        /* DIRECTORY & BADGES */
         .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(15, 23, 42, 0.4); }
-        th { background: rgba(30, 41, 59, 0.9); padding: 14px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(11, 15, 25, 0.4); }
+        th { background: rgba(21, 28, 44, 0.9); padding: 14px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
         td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
-        tr:hover { background: rgba(51, 65, 85, 0.3); }
+        tr:hover { background: rgba(34, 47, 67, 0.4); }
 
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-        .badge-premium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .badge-basic { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+        .badge-analytic { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .badge-creative { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
 
         .action-btns { display: flex; gap: 8px; }
-        .btn-action-edit { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
-        .btn-action-delete { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
-        .btn-action-edit:hover { background: #f59e0b; color: white; }
-        .btn-action-delete:hover { background: #ef4444; color: white; }
+        .btn-action-edit { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .btn-action-delete { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
 
         /* MODAL */
-        .modal { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); justify-content: center; align-items: center; }
-        .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
-
-        @media (max-width: 1024px) {
-            .wrapper { grid-template-columns: 1fr; }
-            .header { flex-direction: column; gap: 15px; text-align: center; }
-            .header-right { flex-direction: column; }
-        }
+        .modal { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); justify-content: center; align-items: center; }
+        .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 20px; width: 380px; text-align: center; }
     </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
     <div class="brand-title">
-        <div class="brand-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+        <div class="brand-icon"><i class="fa-solid fa-brain"></i></div>
         <div>
-            <h2>Library Digital Directory</h2>
-            <div style="font-size: 12px; color: var(--text-muted);">Smart Student Access Management</div>
+            <h2 style="margin:0; font-size:20px; font-weight:800;">Cognitive Knowledge Hub</h2>
+            <div style="font-size: 12px; color: var(--text-muted);">Interactive Learning & Student Portal</div>
         </div>
     </div>
 
     <div class="header-right">
         <div class="admin-contact">
             <div class="contact-item">
-                <i class="fa-solid fa-phone"></i>
+                <i class="fa-solid fa-headset"></i>
                 <span id="dispAdminPhone"><strong>+91 98765 43210</strong></span>
             </div>
             <div style="width: 1px; height: 16px; background: var(--border);"></div>
@@ -197,24 +141,31 @@
             </div>
         </div>
 
-        <button class="btn-admin" onclick="showModal()">
-            <i class="fa-solid fa-user-shield"></i> Admin Panel
-        </button>
+        <button class="btn-admin" onclick="showModal()"><i class="fa-solid fa-shield"></i> Admin Console</button>
     </div>
 </div>
 
+<!-- DAILY COGNITIVE PUZZLE WIDGET -->
+<div class="puzzle-strip">
+    <div class="puzzle-text">
+        <i class="fa-solid fa-lightbulb"></i>
+        <span><strong>Daily Critical Thinking Challenge:</strong> "If a train leaves Station A at 60 km/h and Station B at 90 km/h towards each other, which logic principle solves their meeting point fastest?"</span>
+    </div>
+    <button class="btn-solve" onclick="alert('💡 Hint: Use Relative Speed Concept! (Speed_A + Speed_B)')">Reveal Logic Hint</button>
+</div>
+
 <div class="wrapper">
-    <!-- LEFT SIDE: REGISTRATION / EDIT FORM -->
+    <!-- LEFT SIDE: REGISTRATION FORM WITH COGNITIVE METRICS -->
     <div class="card">
         <div class="card-title" id="formHeader">
-            <i class="fa-solid fa-user-plus" style="color: #818cf8;"></i> Student Registration
+            <i class="fa-solid fa-user-gear" style="color: var(--accent-purple);"></i> Student Cognitive Profile Setup
         </div>
         <form id="studentForm">
             <input type="hidden" id="studentId">
 
             <div class="form-group">
                 <label>Full Name</label>
-                <input type="text" id="fullName" placeholder="John Doe" required>
+                <input type="text" id="fullName" placeholder="e.g. Rahul Sharma" required>
             </div>
 
             <div class="form-grid">
@@ -231,11 +182,15 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>Mobile Number</label>
-                    <input type="text" id="mobile" placeholder="10-digit number">
+                    <input type="text" id="mobile" placeholder="10-digit mobile">
                 </div>
                 <div class="form-group">
-                    <label>Background</label>
-                    <input type="text" id="background" placeholder="CS / Non-CS">
+                    <label>Thinking Style</label>
+                    <select id="background">
+                        <option value="Analytical (CS)">Analytical Mindset</option>
+                        <option value="Creative (Non-CS)">Creative / Conceptual</option>
+                        <option value="Practical">Practical Logic Focus</option>
+                    </select>
                 </div>
             </div>
 
@@ -245,110 +200,97 @@
             </div>
 
             <div class="form-group">
-                <label>Address / City</label>
-                <input type="text" id="address" placeholder="City or Address">
+                <label>City / Location</label>
+                <input type="text" id="address" placeholder="e.g. Delhi / Noida">
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Membership</label>
+                    <label>Access Tier</label>
                     <select id="membership">
-                        <option value="Basic (Free)">Basic (Free)</option>
-                        <option value="Premium">Premium</option>
+                        <option value="Basic (Free)">Basic Access</option>
+                        <option value="Premium">Premium Cognitive Pass</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Free Book Option</label>
+                    <label>Logic Book Kit</label>
                     <select id="freeBook">
                         <option value="None">None</option>
-                        <option value="Yes">Yes</option>
+                        <option value="Yes">Yes (Logic Starter Kit)</option>
                     </select>
                 </div>
             </div>
 
             <button type="submit" class="btn-submit" id="submitBtn">
-                <i class="fa-solid fa-check-circle"></i> Save Student Record
+                <i class="fa-solid fa-bolt"></i> Register & Initialize Profile
             </button>
-            <button type="button" class="btn-cancel" id="cancelBtn" onclick="resetForm()">Cancel Edit</button>
+            <button type="button" class="btn-cancel" id="cancelBtn" onclick="resetForm()">Cancel Editing</button>
         </form>
     </div>
 
-    <!-- RIGHT SIDE: LIVE DIRECTORY TABLE WITH EDIT/DELETE FOR STUDENTS -->
+    <!-- RIGHT SIDE: DIRECTORY TABLE -->
     <div class="card">
-        <div class="table-tools">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div class="card-title" style="border:none; margin:0; padding:0;">
-                <i class="fa-solid fa-users" style="color: #38bdf8;"></i> Registered Students
+                <i class="fa-solid fa-users-viewfinder" style="color: var(--accent-cyan);"></i> Active Mind Profiles
             </div>
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Search student..." onkeyup="filterTable()">
-            </div>
+            <input type="text" id="searchInput" placeholder="Search profile..." onkeyup="filterTable()" style="width:200px; padding:8px 12px;">
         </div>
 
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Student Info</th>
-                        <th>Contact / Location</th>
-                        <th>Plan</th>
+                        <th>Student Details</th>
+                        <th>Cognitive Profile</th>
+                        <th>Contact / Loc</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="studentTableBody">
-                    <!-- Dynamic Rows -->
-                </tbody>
+                <tbody id="studentTableBody"></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- ADMIN AUTH MODAL -->
+<!-- ADMIN MODAL -->
 <div id="adminModal" class="modal">
     <div class="modal-content">
-        <div style="font-size: 36px; color: #818cf8; margin-bottom: 10px;"><i class="fa-solid fa-shield-halved"></i></div>
-        <h3 style="margin: 0 0 10px 0;">Admin Access Login</h3>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Enter security PIN to manage Admin settings:</p>
-        
-        <input type="password" id="adminPin" placeholder="Enter PIN (Default: 1234)" style="margin-bottom: 15px; text-align: center; font-size: 16px; letter-spacing: 2px;">
-        
-        <button class="btn-admin" style="width:100%; justify-content:center;" onclick="verifyAdminPin()">
-            Open Admin Panel
-        </button>
-        <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:12px; color:var(--text-muted); cursor:pointer;">Cancel</button>
+        <i class="fa-solid fa-lock" style="font-size:36px; color:var(--accent-purple); margin-bottom:12px;"></i>
+        <h3 style="margin:0 0 8px 0;">Admin Console Access</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Enter Security PIN (Default: 1234):</p>
+        <input type="password" id="adminPin" placeholder="PIN" style="margin-bottom:15px; text-align:center;">
+        <button class="btn-admin" style="width:100%;" onclick="verifyAdminPin()">Unlock Admin</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:10px; color:var(--text-muted); cursor:pointer;">Close</button>
     </div>
 </div>
 
 <script>
     let globalStudents = [];
 
-    // Sync Admin Contact Details from LocalStorage
     function syncAdminContact() {
-        const phone = localStorage.getItem('admin_phone') || '+91 98765 43210';
-        const email = localStorage.getItem('admin_email') || 'admin@library.com';
-        document.getElementById('dispAdminPhone').innerHTML = `<strong>${phone}</strong>`;
-        document.getElementById('dispAdminEmail').innerHTML = `<strong>${email}</strong>`;
+        document.getElementById('dispAdminPhone').innerHTML = `<strong>${localStorage.getItem('admin_phone') || '+91 98765 43210'}</strong>`;
+        document.getElementById('dispAdminEmail').innerHTML = `<strong>${localStorage.getItem('admin_email') || 'admin@library.com'}</strong>`;
     }
 
     function showModal() { document.getElementById('adminModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('adminModal').style.display = 'none'; }
 
     function verifyAdminPin() {
-        const pin = document.getElementById('adminPin').value;
-        if (pin === '1234' || pin === 'admin') {
+        if (document.getElementById('adminPin').value === '1234' || document.getElementById('adminPin').value === 'admin') {
             sessionStorage.setItem('adminAuth', 'true');
             window.location.href = '/admin.html';
         } else {
-            alert('❌ Incorrect Admin PIN! Use 1234');
+            alert('❌ Invalid PIN! Use 1234');
         }
     }
 
     function resetForm() {
         document.getElementById('studentForm').reset();
         document.getElementById('studentId').value = '';
-        document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-check-circle"></i> Save Student Record';
-        document.getElementById('submitBtn').style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        document.getElementById('formHeader').innerHTML = '<i class="fa-solid fa-user-plus" style="color: #818cf8;"></i> Student Registration';
+        document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-bolt"></i> Register & Initialize Profile';
+        document.getElementById('submitBtn').style.background = 'linear-gradient(135deg, var(--accent-green), #059669)';
+        document.getElementById('formHeader').innerHTML = '<i class="fa-solid fa-user-gear" style="color: var(--accent-purple);"></i> Student Cognitive Profile Setup';
         document.getElementById('cancelBtn').style.display = 'none';
     }
 
@@ -357,9 +299,7 @@
             const res = await fetch('/api/students');
             globalStudents = await res.json();
             renderTable(globalStudents);
-        } catch (err) {
-            console.error("Fetch Error:", err);
-        }
+        } catch (e) { console.error(e); }
     }
 
     function renderTable(data) {
@@ -367,32 +307,32 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No students registered yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered profiles found.</td></tr>`;
             return;
         }
 
         data.forEach(s => {
             const tr = document.createElement('tr');
             const name = s.fullName || s.name || 'N/A';
-            const addr = s.address || s.city || 'N/A';
-            const badgeClass = s.membership === 'Premium' ? 'badge-premium' : 'badge-basic';
+            const bg = s.background || 'Analytical';
+            const badgeClass = bg.includes('Creative') ? 'badge-creative' : 'badge-analytic';
 
             tr.innerHTML = `
                 <td>
-                    <strong>${name}</strong><br>
-                    <small style="color:var(--text-muted);">Deg: ${s.degree || 'N/A'} | Ftr: ${s.fatherName || 'N/A'}</small>
+                    <strong style="color:#f8fafc;">${name}</strong><br>
+                    <small style="color:var(--text-muted);">Father: ${s.fatherName || 'N/A'} | Deg: ${s.degree || 'N/A'}</small>
+                </td>
+                <td>
+                    <span class="badge ${badgeClass}"><i class="fa-solid fa-brain"></i> ${bg}</span><br>
+                    <small style="color:var(--text-muted);">Pass: ${s.membership || 'Basic'}</small>
                 </td>
                 <td>
                     ${s.email || 'N/A'}<br>
-                    <small style="color:var(--text-muted);">Mob: ${s.mobile || 'N/A'} | Loc: ${addr}</small>
-                </td>
-                <td>
-                    <span class="badge ${badgeClass}">${s.membership || 'Basic'}</span><br>
-                    <small style="color:var(--text-muted);">Book: ${s.freeBook || 'None'}</small>
+                    <small style="color:var(--text-muted);">Mob: ${s.mobile || 'N/A'} | ${s.address || 'N/A'}</small>
                 </td>
                 <td>
                     <div class="action-btns">
-                        <button class="btn-action-edit" onclick="editStudent('${s._id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="btn-action-edit" onclick="editStudent('${s._id}')"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn-action-delete" onclick="deleteStudent('${s._id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </td>
@@ -403,12 +343,7 @@
 
     function filterTable() {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = globalStudents.filter(s => 
-            (s.fullName && s.fullName.toLowerCase().includes(q)) ||
-            (s.email && s.email.toLowerCase().includes(q)) ||
-            (s.address && s.address.toLowerCase().includes(q))
-        );
-        renderTable(filtered);
+        renderTable(globalStudents.filter(s => (s.fullName && s.fullName.toLowerCase().includes(q)) || (s.email && s.email.toLowerCase().includes(q))));
     }
 
     function editStudent(id) {
@@ -422,29 +357,21 @@
         document.getElementById('mobile').value = s.mobile || '';
         document.getElementById('email').value = s.email || '';
         document.getElementById('address').value = s.address || s.city || '';
-        document.getElementById('background').value = s.background || '';
+        document.getElementById('background').value = s.background || 'Analytical (CS)';
         document.getElementById('membership').value = s.membership || 'Basic (Free)';
         document.getElementById('freeBook').value = s.freeBook || 'None';
 
-        document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> Update Student Details';
+        document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> Update Cognitive Profile';
         document.getElementById('submitBtn').style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
-        document.getElementById('formHeader').innerHTML = '<i class="fa-solid fa-user-pen" style="color: #fbbf24;"></i> Edit Student Details';
+        document.getElementById('formHeader').innerHTML = '<i class="fa-solid fa-user-pen" style="color: #fbbf24;"></i> Edit Student Profile';
         document.getElementById('cancelBtn').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function deleteStudent(id) {
-        if (!confirm("Are you sure you want to delete this record?")) return;
-
-        try {
-            const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                alert("Student deleted successfully!");
-                loadStudents();
-            }
-        } catch (err) {
-            alert("Delete failed!");
-        }
+        if (!confirm("Are you sure you want to delete this profile?")) return;
+        await fetch(`/api/students/${id}`, { method: 'DELETE' });
+        loadStudents();
     }
 
     document.getElementById('studentForm').addEventListener('submit', async (e) => {
@@ -454,37 +381,30 @@
         const addrVal = document.getElementById('address').value.trim();
 
         const payload = {
-            fullName: nameVal, name: nameVal,
-            address: addrVal, city: addrVal,
+            fullName: nameVal, name: nameVal, address: addrVal, city: addrVal,
             fatherName: document.getElementById('fatherName').value.trim(),
             degree: document.getElementById('degree').value.trim(),
             mobile: document.getElementById('mobile').value.trim(),
             email: document.getElementById('email').value.trim(),
-            background: document.getElementById('background').value.trim(),
+            background: document.getElementById('background').value,
             membership: document.getElementById('membership').value,
             freeBook: document.getElementById('freeBook').value
         };
 
         const isEdit = Boolean(id);
-        const url = isEdit ? `/api/students/${id}` : '/api/students';
-        const method = isEdit ? 'PUT' : 'POST';
-
-        const res = await fetch(url, {
-            method: method,
+        const res = await fetch(isEdit ? `/api/students/${id}` : '/api/students', {
+            method: isEdit ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         if (res.ok) {
-            alert(isEdit ? "Record updated successfully!" : "Student registered successfully!");
+            alert(isEdit ? "Profile updated!" : "Student profile initialized!");
             resetForm();
             loadStudents();
-        } else {
-            alert("Error saving student!");
         }
     });
 
-    // Init
     syncAdminContact();
     loadStudents();
 </script>

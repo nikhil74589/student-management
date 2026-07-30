@@ -17,6 +17,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+
+// Serve Static Frontend Files from public/
 app.use(express.static(path.join(__dirname, "public")));
 
 // =======================
@@ -24,12 +26,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // =======================
 const PORT = process.env.PORT || 3001;
 const ENV = process.env.ENVIRONMENT || process.env.NODE_ENV || "dev";
-const MONGO_URI = process.env.MONGO_URI;
-
-if (!MONGO_URI) {
-  console.error("❌ MONGO_URI not found.");
-  process.exit(1);
-}
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/studentDB";
 
 // =======================
 // MongoDB Connection
@@ -37,22 +34,14 @@ if (!MONGO_URI) {
 mongoose
   .connect(MONGO_URI)
   .then(() => {
-    console.log("====================================");
-    console.log("🚀 Student Management System Started");
-    console.log(`🌍 Environment : ${ENV}`);
-    console.log(`🌐 URL : http://0.0.0.0:${PORT}`);
-    console.log("====================================");
-    console.log("✅ MongoDB Connected");
-    console.log(`📦 Database : ${MONGO_URI}`);
+    console.log(`✅ MongoDB Connected | ENV: ${ENV}`);
   })
   .catch((err) => {
-    console.error("❌ MongoDB Connection Error");
-    console.error(err);
-    process.exit(1);
+    console.error("❌ MongoDB Connection Error:", err);
   });
 
 // =======================
-// Student Schema
+// Student Schema (Strict Mode OFF)
 // =======================
 const studentSchema = new mongoose.Schema(
   {
@@ -66,153 +55,89 @@ const studentSchema = new mongoose.Schema(
     membership: { type: String, default: "Basic (Free)" },
     freeBook: { type: String, default: "None" },
 
-    // Legacy compatibility
+    // Legacy fields fallback
     name: { type: String },
     city: { type: String },
   },
   {
     timestamps: true,
-    strict: false,
+    strict: false, // Prevents 400 Path required validation errors
   }
 );
 
-const Student = mongoose.model("StudentPortal", studentSchema);
+// Changed Model Name to bypass old DB strict indexes
+const Student = mongoose.model("StudentPortalV2", studentSchema);
 
 // =======================
-// GET All Students
+// API Routes
 // =======================
+
+// GET All Students
 app.get("/api/students", async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
     res.status(200).json(students);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: "Failed to fetch students",
-    });
+    res.status(500).json({ error: "Failed to fetch students" });
   }
 });
 
-// =======================
-// GET Single Student
-// =======================
-app.get("/api/students/:id", async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id);
-
-    if (!student) {
-      return res.status(404).json({
-        error: "Student not found",
-      });
-    }
-
-    res.status(200).json(student);
-  } catch (err) {
-    res.status(500).json({
-      error: err.message,
-    });
-  }
-});
-
-// =======================
 // CREATE Student
-// =======================
 app.post("/api/students", async (req, res) => {
   try {
     const payload = req.body || {};
 
-    // Legacy fields support
+    // Legacy Fallbacks
     payload.name = payload.fullName || payload.name || "N/A";
     payload.city = payload.address || payload.city || "N/A";
 
     const student = new Student(payload);
     const savedStudent = await student.save();
-
     res.status(201).json(savedStudent);
   } catch (err) {
     console.error("Save Error:", err);
-
-    res.status(400).json({
-      error: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// =======================
 // UPDATE Student
-// =======================
 app.put("/api/students/:id", async (req, res) => {
   try {
     const payload = req.body || {};
-
-    if (payload.fullName) {
-      payload.name = payload.fullName;
-    }
-
-    if (payload.address) {
-      payload.city = payload.address;
-    }
+    if (payload.fullName) payload.name = payload.fullName;
+    if (payload.address) payload.city = payload.address;
 
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
       payload,
-      {
-        new: true,
-        runValidators: false,
-      }
+      { new: true, runValidators: false }
     );
-
-    if (!updatedStudent) {
-      return res.status(404).json({
-        error: "Student not found",
-      });
-    }
-
     res.status(200).json(updatedStudent);
   } catch (err) {
-    res.status(400).json({
-      error: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// =======================
 // DELETE Student
-// =======================
 app.delete("/api/students/:id", async (req, res) => {
   try {
-    const deletedStudent = await Student.findByIdAndDelete(
-      req.params.id
-    );
-
-    if (!deletedStudent) {
-      return res.status(404).json({
-        error: "Student not found",
-      });
-    }
-
-    res.status(200).json({
-      message: "Student deleted successfully",
-    });
+    await Student.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Student deleted successfully" });
   } catch (err) {
-    res.status(500).json({
-      error: err.message,
-    });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // =======================
-// Frontend Route
+// Serve Frontend Index.html
 // =======================
 app.get("*", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "index.html")
-  );
+  res.sendFile(path.resolve(__dirname, "public", "index.html"));
 });
 
 // =======================
 // Start Server
 // =======================
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

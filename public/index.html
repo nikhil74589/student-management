@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognitive Digital Library & Learning Portal</title>
+    <title>Cognitive Knowledge Hub & Student Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -11,7 +11,7 @@
         :root {
             --bg: #0b0f19;
             --surface: #151c2c;
-            --surface-card: rgba(21, 28, 44, 0.75);
+            --surface-card: rgba(21, 28, 44, 0.85);
             --border: #222f43;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -21,7 +21,7 @@
             --accent-amber: #f59e0b;
         }
 
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s ease; }
         
         body { 
             margin: 0; padding: 20px; 
@@ -29,7 +29,6 @@
             color: var(--text-main); min-height: 100vh; 
         }
 
-        /* HEADER & COGNITIVE HUD */
         .header { 
             display: flex; justify-content: space-between; align-items: center; 
             max-width: 1440px; margin: 0 auto 20px auto; 
@@ -44,7 +43,6 @@
             box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
         }
 
-        /* COGNITIVE PUZZLE STRIP */
         .puzzle-strip {
             max-width: 1440px; margin: 0 auto 24px auto;
             background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.15));
@@ -66,7 +64,6 @@
             color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 13px;
         }
 
-        /* LAYOUT GRID */
         .wrapper { display: grid; grid-template-columns: 440px 1fr; gap: 24px; max-width: 1440px; margin: auto; }
 
         .card { 
@@ -79,7 +76,6 @@
             display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 12px;
         }
 
-        /* FORM STYLES */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -96,7 +92,6 @@
         }
         .btn-cancel { width: 100%; padding: 10px; background: #475569; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 6px; display: none; }
 
-        /* DIRECTORY & BADGES */
         .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(11, 15, 25, 0.4); }
         th { background: rgba(21, 28, 44, 0.9); padding: 14px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
@@ -111,7 +106,6 @@
         .btn-action-edit { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
         .btn-action-delete { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
 
-        /* MODAL */
         .modal { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); justify-content: center; align-items: center; }
         .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 20px; width: 380px; text-align: center; }
     </style>
@@ -145,17 +139,17 @@
     </div>
 </div>
 
-<!-- DAILY COGNITIVE PUZZLE WIDGET -->
+<!-- DAILY COGNITIVE PUZZLE STRIP -->
 <div class="puzzle-strip">
     <div class="puzzle-text">
         <i class="fa-solid fa-lightbulb"></i>
         <span><strong>Daily Critical Thinking Challenge:</strong> "If a train leaves Station A at 60 km/h and Station B at 90 km/h towards each other, which logic principle solves their meeting point fastest?"</span>
     </div>
-    <button class="btn-solve" onclick="alert('💡 Hint: Use Relative Speed Concept! (Speed_A + Speed_B)')">Reveal Logic Hint</button>
+    <button class="btn-solve" onclick="alert('💡 Relative Speed Logic: Total Speed = 60 + 90 = 150 km/h!')">Reveal Logic Hint</button>
 </div>
 
 <div class="wrapper">
-    <!-- LEFT SIDE: REGISTRATION FORM WITH COGNITIVE METRICS -->
+    <!-- REGISTRATION / EDIT FORM -->
     <div class="card">
         <div class="card-title" id="formHeader">
             <i class="fa-solid fa-user-gear" style="color: var(--accent-purple);"></i> Student Cognitive Profile Setup
@@ -171,52 +165,52 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>Father's Name</label>
-                    <input type="text" id="fatherName" placeholder="Father's Name">
+                    <input type="text" id="fatherName" placeholder="Father's Name" required>
                 </div>
                 <div class="form-group">
                     <label>Degree</label>
-                    <input type="text" id="degree" placeholder="B.Tech / MCA">
+                    <input type="text" id="degree" placeholder="B.Tech / MCA" required>
                 </div>
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
                     <label>Mobile Number</label>
-                    <input type="text" id="mobile" placeholder="10-digit mobile">
+                    <input type="text" id="mobile" placeholder="10-digit mobile" required>
                 </div>
                 <div class="form-group">
                     <label>Thinking Style</label>
                     <select id="background">
-                        <option value="Analytical (CS)">Analytical Mindset</option>
-                        <option value="Creative (Non-CS)">Creative / Conceptual</option>
-                        <option value="Practical">Practical Logic Focus</option>
+                        <option value="Analytical Mindset">Analytical Mindset</option>
+                        <option value="Creative / Conceptual">Creative / Conceptual</option>
+                        <option value="Practical Logic Focus">Practical Logic Focus</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-group">
                 <label>Email Address</label>
-                <input type="email" id="email" placeholder="student@gmail.com">
+                <input type="email" id="email" placeholder="student@gmail.com" required>
             </div>
 
             <div class="form-group">
                 <label>City / Location</label>
-                <input type="text" id="address" placeholder="e.g. Delhi / Noida">
+                <input type="text" id="address" placeholder="e.g. Delhi / Noida" required>
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
                     <label>Access Tier</label>
                     <select id="membership">
-                        <option value="Basic (Free)">Basic Access</option>
-                        <option value="Premium">Premium Cognitive Pass</option>
+                        <option value="Basic Access">Basic Access</option>
+                        <option value="Premium Cognitive Pass">Premium Cognitive Pass</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Logic Book Kit</label>
                     <select id="freeBook">
                         <option value="None">None</option>
-                        <option value="Yes">Yes (Logic Starter Kit)</option>
+                        <option value="Yes (Logic Starter Kit)">Yes (Logic Starter Kit)</option>
                     </select>
                 </div>
             </div>
@@ -228,7 +222,7 @@
         </form>
     </div>
 
-    <!-- RIGHT SIDE: DIRECTORY TABLE -->
+    <!-- REGISTERED DIRECTORY TABLE -->
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div class="card-title" style="border:none; margin:0; padding:0;">
@@ -253,7 +247,7 @@
     </div>
 </div>
 
-<!-- ADMIN MODAL -->
+<!-- ADMIN PIN MODAL -->
 <div id="adminModal" class="modal">
     <div class="modal-content">
         <i class="fa-solid fa-lock" style="font-size:36px; color:var(--accent-purple); margin-bottom:12px;"></i>
@@ -277,7 +271,8 @@
     function closeModal() { document.getElementById('adminModal').style.display = 'none'; }
 
     function verifyAdminPin() {
-        if (document.getElementById('adminPin').value === '1234' || document.getElementById('adminPin').value === 'admin') {
+        const pin = document.getElementById('adminPin').value.trim();
+        if (pin === '1234' || pin === 'admin') {
             sessionStorage.setItem('adminAuth', 'true');
             window.location.href = '/admin.html';
         } else {
@@ -299,22 +294,22 @@
             const res = await fetch('/api/students');
             globalStudents = await res.json();
             renderTable(globalStudents);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Fetch Error:", e); }
     }
 
     function renderTable(data) {
         const tbody = document.getElementById('studentTableBody');
         tbody.innerHTML = '';
 
-        if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered profiles found.</td></tr>`;
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered profiles found. Fill form to register.</td></tr>`;
             return;
         }
 
         data.forEach(s => {
             const tr = document.createElement('tr');
             const name = s.fullName || s.name || 'N/A';
-            const bg = s.background || 'Analytical';
+            const bg = s.background || 'Analytical Mindset';
             const badgeClass = bg.includes('Creative') ? 'badge-creative' : 'badge-analytic';
 
             tr.innerHTML = `
@@ -324,15 +319,15 @@
                 </td>
                 <td>
                     <span class="badge ${badgeClass}"><i class="fa-solid fa-brain"></i> ${bg}</span><br>
-                    <small style="color:var(--text-muted);">Pass: ${s.membership || 'Basic'}</small>
+                    <small style="color:var(--text-muted);">Tier: ${s.membership || 'Basic Access'}</small>
                 </td>
                 <td>
                     ${s.email || 'N/A'}<br>
-                    <small style="color:var(--text-muted);">Mob: ${s.mobile || 'N/A'} | ${s.address || 'N/A'}</small>
+                    <small style="color:var(--text-muted);">Mob: ${s.mobile || 'N/A'} | Loc: ${s.address || s.city || 'N/A'}</small>
                 </td>
                 <td>
                     <div class="action-btns">
-                        <button class="btn-action-edit" onclick="editStudent('${s._id}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-action-edit" onclick="editStudent('${s._id}')"><i class="fa-solid fa-pen"></i> Edit</button>
                         <button class="btn-action-delete" onclick="deleteStudent('${s._id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </td>
@@ -343,7 +338,11 @@
 
     function filterTable() {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        renderTable(globalStudents.filter(s => (s.fullName && s.fullName.toLowerCase().includes(q)) || (s.email && s.email.toLowerCase().includes(q))));
+        renderTable(globalStudents.filter(s => {
+            const n = (s.fullName || s.name || '').toLowerCase();
+            const e = (s.email || '').toLowerCase();
+            return n.includes(q) || e.includes(q);
+        }));
     }
 
     function editStudent(id) {
@@ -357,8 +356,8 @@
         document.getElementById('mobile').value = s.mobile || '';
         document.getElementById('email').value = s.email || '';
         document.getElementById('address').value = s.address || s.city || '';
-        document.getElementById('background').value = s.background || 'Analytical (CS)';
-        document.getElementById('membership').value = s.membership || 'Basic (Free)';
+        document.getElementById('background').value = s.background || 'Analytical Mindset';
+        document.getElementById('membership').value = s.membership || 'Basic Access';
         document.getElementById('freeBook').value = s.freeBook || 'None';
 
         document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> Update Cognitive Profile';
@@ -370,8 +369,15 @@
 
     async function deleteStudent(id) {
         if (!confirm("Are you sure you want to delete this profile?")) return;
-        await fetch(`/api/students/${id}`, { method: 'DELETE' });
-        loadStudents();
+        try {
+            const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                alert("Profile deleted!");
+                loadStudents();
+            } else {
+                alert("Error deleting record!");
+            }
+        } catch(err) { console.error(err); }
     }
 
     document.getElementById('studentForm').addEventListener('submit', async (e) => {
@@ -392,16 +398,24 @@
         };
 
         const isEdit = Boolean(id);
-        const res = await fetch(isEdit ? `/api/students/${id}` : '/api/students', {
-            method: isEdit ? 'PUT' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await fetch(isEdit ? `/api/students/${id}` : '/api/students', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        if (res.ok) {
-            alert(isEdit ? "Profile updated!" : "Student profile initialized!");
-            resetForm();
-            loadStudents();
+            if (res.ok) {
+                alert(isEdit ? "Profile updated successfully!" : "Student profile initialized!");
+                resetForm();
+                loadStudents();
+            } else {
+                const errData = await res.json();
+                alert("Failed to save: " + (errData.error || "Server error"));
+            }
+        } catch(err) {
+            console.error(err);
+            alert("Network/Server connection issue!");
         }
     });
 

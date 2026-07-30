@@ -52,7 +52,6 @@ jobs:
   deploy-dev:
     name: Deploy Development
     needs: build
-    # Main me push hone par, ya fir specific 'develop' branch par trigger hoga
     if: github.ref_name == 'main' || github.ref_name == 'develop'
     runs-on: ubuntu-latest
 
@@ -127,9 +126,9 @@ jobs:
   # ================= 3. QA (vm-public, Port 3002) =================
   deploy-qa:
     name: Deploy QA
-    needs: build
-    # Main me push hone par, ya fir specific 'qa' branch par trigger hoga
-    if: github.ref_name == 'main' || github.ref_name == 'qa'
+    # Changes made here: Always runs after deploy-dev OR directly after build if pushing to 'qa' branch
+    needs: [build, deploy-dev]
+    if: always() && (github.ref_name == 'qa' || (github.ref_name == 'main' && needs.deploy-dev.result == 'success'))
     runs-on: ubuntu-latest
 
     environment:
@@ -204,9 +203,9 @@ jobs:
   # ================= 4. PRODUCTION (vm-public, Port 3000) =================
   deploy-prod:
     name: Deploy Production
-    needs: build
-    # Yeh stage SIRF tab chalegi jab 'main' branch par push hoga
-    if: github.ref_name == 'main'
+    # Changes made here: Always runs after deploy-qa
+    needs: [build, deploy-qa]
+    if: always() && github.ref_name == 'main' && needs.deploy-qa.result == 'success'
     runs-on: ubuntu-latest
 
     environment:

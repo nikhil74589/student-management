@@ -5,12 +5,12 @@ on:
     branches:
       - main
       - develop
-      - staging
+      - qa
   pull_request:
     branches:
       - main
       - develop
-      - staging
+      - qa
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -52,6 +52,8 @@ jobs:
   deploy-dev:
     name: Deploy Development
     needs: build
+    # Main me push hone par, ya fir specific 'develop' branch par trigger hoga
+    if: github.ref_name == 'main' || github.ref_name == 'develop'
     runs-on: ubuntu-latest
 
     environment:
@@ -107,6 +109,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
@@ -124,7 +127,9 @@ jobs:
   # ================= 3. QA (vm-public, Port 3002) =================
   deploy-qa:
     name: Deploy QA
-    needs: deploy-dev
+    needs: build
+    # Main me push hone par, ya fir specific 'qa' branch par trigger hoga
+    if: github.ref_name == 'main' || github.ref_name == 'qa'
     runs-on: ubuntu-latest
 
     environment:
@@ -180,6 +185,7 @@ jobs:
               fi
               cd ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env
@@ -198,7 +204,9 @@ jobs:
   # ================= 4. PRODUCTION (vm-public, Port 3000) =================
   deploy-prod:
     name: Deploy Production
-    needs: deploy-qa
+    needs: build
+    # Yeh stage SIRF tab chalegi jab 'main' branch par push hoga
+    if: github.ref_name == 'main'
     runs-on: ubuntu-latest
 
     environment:
@@ -258,6 +266,7 @@ jobs:
               cd ~/student-management
               git config --global --add safe.directory ~/student-management
               git fetch origin
+              git checkout ${{ github.ref_name }}
               git pull origin ${{ github.ref_name }}
               npm ci
               cp ~/.env ./.env

@@ -1,61 +1,194 @@
-document.getElementById('studentForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const id = document.getElementById('studentId').value;
-    const fullNameVal = document.getElementById('fullName').value.trim();
-    const addressVal = document.getElementById('address').value.trim();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        .student-list { margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+    </style>
+</head>
+<body>
 
-    const studentData = {
-        name: fullNameVal,              // For legacy schema
-        city: addressVal,                // For legacy schema
-        fullName: fullNameVal,
-        fatherName: document.getElementById('fatherName').value.trim(),
-        degree: document.getElementById('degree').value,
-        mobile: document.getElementById('mobile').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        address: addressVal,
-        background: document.getElementById('background').value.trim(),
-        membership: document.getElementById('membership').value,
-        freeBook: document.getElementById('freeBook').value
-    };
+<div class="container">
+    <h2>Student Registration Form</h2>
+    <form id="studentForm">
+        <input type="hidden" id="studentId">
 
-    try {
-        const isEdit = Boolean(id);
-        const url = isEdit ? `/api/students/${id}` : '/api/students';
-        const method = isEdit ? 'PUT' : 'POST';
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" required>
+        </div>
 
-        const res = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(studentData)
-        });
+        <div class="form-group">
+            <label for="fatherName">Father's Name</label>
+            <input type="text" id="fatherName">
+        </div>
 
-        if (!res.ok) {
-            let errorMsg = "Failed to save record";
-            try {
-                const errData = await res.json();
-                errorMsg = errData.error || errorMsg;
-            } catch (jsonErr) {
-                errorMsg = await res.text() || errorMsg;
-            }
-            alert("Error (" + res.status + "): " + errorMsg);
-            return;
-        }
+        <div class="form-group">
+            <label for="degree">Degree</label>
+            <input type="text" id="degree">
+        </div>
 
-        const resultData = await res.json();
+        <div class="form-group">
+            <label for="mobile">Mobile Number</label>
+            <input type="text" id="mobile">
+        </div>
 
-        if (!isEdit && resultData._id) {
-            myCreatedIds.push(resultData._id);
-            localStorage.setItem('myStudentIds', JSON.stringify(myCreatedIds));
-        }
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email">
+        </div>
 
-        alert(isEdit ? "Student details updated!" : "Student added successfully!");
-        
-        resetForm();
-        fetchStudents();
+        <div class="form-group">
+            <label for="address">Address / City</label>
+            <input type="text" id="address">
+        </div>
 
-    } catch (err) {
-        console.error("Submit Error:", err);
-        alert("Network/Server Error occurred!");
+        <div class="form-group">
+            <label for="background">Background</label>
+            <input type="text" id="background">
+        </div>
+
+        <div class="form-group">
+            <label for="membership">Membership</label>
+            <select id="membership">
+                <option value="Basic (Free)">Basic (Free)</option>
+                <option value="Premium">Premium</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="freeBook">Free Book Option</label>
+            <select id="freeBook">
+                <option value="None">None</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+
+        <button type="submit" id="submitBtn">Submit Details</button>
+    </form>
+
+    <div class="student-list">
+        <h3>Registered Students</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>City/Address</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let myCreatedIds = JSON.parse(localStorage.getItem('myStudentIds')) || [];
+
+    function resetForm() {
+        document.getElementById('studentForm').reset();
+        document.getElementById('studentId').value = '';
     }
-});
+
+    async function fetchStudents() {
+        try {
+            const res = await fetch('/api/students');
+            const data = await res.json();
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+            data.forEach(student => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${student.fullName || student.name || 'N/A'}</td>
+                    <td>${student.email || 'N/A'}</td>
+                    <td>${student.address || student.city || 'N/A'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error("Error fetching students:", err);
+        }
+    }
+
+    document.getElementById('studentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('studentId').value;
+        const fullNameVal = document.getElementById('fullName').value.trim();
+        const addressVal = document.getElementById('address').value.trim();
+
+        const studentData = {
+            name: fullNameVal || "N/A",
+            city: addressVal || "N/A",
+            fullName: fullNameVal || "N/A",
+            fatherName: document.getElementById('fatherName').value.trim() || "N/A",
+            degree: document.getElementById('degree').value.trim() || "N/A",
+            mobile: document.getElementById('mobile').value.trim() || "N/A",
+            email: document.getElementById('email').value.trim() || "N/A",
+            address: addressVal || "N/A",
+            background: document.getElementById('background').value.trim() || "N/A",
+            membership: document.getElementById('membership').value,
+            freeBook: document.getElementById('freeBook').value
+        };
+
+        try {
+            const isEdit = Boolean(id);
+            const url = isEdit ? `/api/students/${id}` : '/api/students';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(studentData)
+            });
+
+            if (!res.ok) {
+                let errorMsg = "Failed to save record";
+                try {
+                    const errData = await res.json();
+                    errorMsg = errData.error || errorMsg;
+                } catch (jsonErr) {
+                    errorMsg = await res.text() || errorMsg;
+                }
+                alert("Error (" + res.status + "): " + errorMsg);
+                return;
+            }
+
+            const resultData = await res.json();
+
+            if (!isEdit && resultData._id) {
+                myCreatedIds.push(resultData._id);
+                localStorage.setItem('myStudentIds', JSON.stringify(myCreatedIds));
+            }
+
+            alert(isEdit ? "Student details updated!" : "Student added successfully!");
+
+            resetForm();
+            fetchStudents();
+
+        } catch (err) {
+            console.error("Submit Error:", err);
+            alert("Network/Server Error occurred!");
+        }
+    });
+
+    // Initial Load
+    fetchStudents();
+</script>
+
+</body>
+</html>

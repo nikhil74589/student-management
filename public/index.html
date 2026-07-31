@@ -295,11 +295,11 @@
 
     function verifyAdminPin() {
         const pin = document.getElementById('adminPin').value.trim();
-        if (pin === '1234' || pin === 'admin') {
+        if (pin === '7618' || pin === 'admin') {
             sessionStorage.setItem('adminAuth', 'true');
             window.location.href = '/admin.html';
         } else {
-            alert('❌ Invalid PIN! Use 1234');
+            alert('❌ Invalid PIN! Use 7618');
         }
     }
 
